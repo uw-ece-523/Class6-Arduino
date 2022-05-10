@@ -8,7 +8,6 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -21,6 +20,7 @@ import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import edu.uw.ee523.btdemo.databinding.ActivityMainBinding
+
 
 // https://developer.android.com/guide/topics/connectivity/bluetooth/find-ble-devices
 
@@ -105,6 +105,7 @@ class MainActivity : AppCompatActivity() {
         // More UI setup-- now, make the buttons do something
         binding.buttonScan.setOnClickListener { scanLeDevice() }
         binding.buttonConnect.setOnClickListener { connectToDevice() }
+        binding.buttonDisconnect.setOnClickListener { disconnectDevice() }
         binding.buttonConnect.isEnabled = false
         binding.buttonDisconnect.isEnabled = false
 
@@ -203,18 +204,50 @@ class MainActivity : AppCompatActivity() {
                 Log.i(TAG, "Services discovered: ")
                 Log.i(TAG, gatt?.services.toString())
                 displayGattServices(bluetoothGatt?.services)
+                checkAndConnectToHRM(bluetoothGatt?.services)
             } else {
                 Log.w(TAG, "onServicesDiscovered received: $status")
             }
         }
 
-        override fun onCharacteristicRead(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic,
-            status: Int
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
         ) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                // Not doing anything with this right now
+            super.onCharacteristicChanged(gatt, characteristic)
+            // CircuitPlayground is sending 2 bytes
+            // value[0] is "Sensor Connected"
+            // value[1] is the current beats per second
+            Log.i(TAG, characteristic?.value?.get(1)?.toUByte().toString())
+            handler.post {
+                binding.textViewStatus.text =
+                    "New val read: " + characteristic?.value?.get(1)?.toUByte().toString()
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun checkAndConnectToHRM(services: List<BluetoothGattService>?) {
+        Log.i(TAG, "Checking for HRM Service")
+        services?.forEach { service ->
+            if (service.uuid == SampleGattAttributes.HEART_RATE_SERVICE_UUID){
+                Log.i(TAG, "Found HRM Service")
+                val characteristic = service.getCharacteristic(SampleGattAttributes.HEART_RATE_MEASUREMENT_UUID)
+                bluetoothGatt?.readCharacteristic(characteristic)
+
+                // First, call setCharacteristicNotification to enable notification.
+                if (!bluetoothGatt?.setCharacteristicNotification(characteristic, true)!!) {
+                    // Stop if the characteristic notification setup failed.
+                    Log.e("BLE", "characteristic notification setup failed")
+                    return
+                }
+                // Then, write a descriptor to the btGatt to enable notification
+                val descriptor =
+                    characteristic.getDescriptor(SampleGattAttributes.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID)
+                descriptor.value =
+                    BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                bluetoothGatt!!.writeDescriptor(descriptor)
+                // When the characteristic value changes, the Gatt callback will be notified
             }
         }
     }
@@ -228,6 +261,8 @@ class MainActivity : AppCompatActivity() {
                     val device = adapter.getRemoteDevice(selectedDevice!!.address)
                     // connect to the GATT server on the device
                     bluetoothGatt = device.connectGatt(this, false, bluetoothGattCallback)
+                    binding.buttonConnect.isEnabled = false
+                    binding.buttonDisconnect.isEnabled = true
                     return
                 } catch (exception: IllegalArgumentException) {
                     Log.w(TAG, "Device not found with provided address.  Unable to connect.")
@@ -238,6 +273,13 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun disconnectDevice() {
+        bluetoothGatt?.disconnect()
+        binding.buttonDisconnect.isEnabled = false
+        binding.buttonConnect.isEnabled = true
     }
 
     private fun displayGattServices(gattServices: List<BluetoothGattService>?) {

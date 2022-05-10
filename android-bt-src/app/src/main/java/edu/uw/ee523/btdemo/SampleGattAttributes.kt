@@ -1,5 +1,7 @@
 package edu.uw.ee523.btdemo
 
+import java.util.*
+
 /*
  * Copyright (C) 2013 The Android Open Source Project
  *
@@ -24,6 +26,12 @@ package edu.uw.ee523.btdemo
 object SampleGattAttributes {
     private val attributes: HashMap<String?, String?> = HashMap<String?, String?>()
     var HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb"
+    var HEART_RATE_MEASUREMENT_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
+    var HEART_RATE_SERVICE = "0000180d-0000-1000-8000-00805f9b34fb"
+    var HEART_RATE_SERVICE_UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
+    val CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID =
+        UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+
     var CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb"
     fun lookup(uuid: String?, defaultName: String): String {
         val name = attributes[uuid]

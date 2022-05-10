@@ -51,31 +51,12 @@ class GattListAdapter:  ListAdapter<BluetoothGattService, GattListAdapter.ItemVi
         val charString = buildString{
             // Loops through available Characteristics.
             gattCharacteristics.forEach { gattCharacteristic ->
-//                charas += gattCharacteristic
-//                val currentCharaData: HashMap<String, String> = hashMapOf()
-                Log.i(TAG, "Characteristic UUID: " + gattCharacteristic.uuid.toString())
-                Log.i(TAG, gattCharacteristic.descriptors.toString())
+//                Log.i(TAG, "Characteristic UUID: " + gattCharacteristic.uuid.toString())
+//                Log.i(TAG, gattCharacteristic.descriptors.toString())
                 append(gattCharacteristic.uuid.toString())
                 appendLine()
-//            uuid = gattCharacteristic.uuid.toString()
-//            currentCharaData[LIST_NAME] = SampleGattAttributes.lookup(uuid, unknownCharaString)
-//            currentCharaData[LIST_UUID] = uuid
-//                gattCharacteristicGroupData += currentCharaData
             }
         }
-//        // Loops through available Characteristics.
-//        gattCharacteristics.forEach { gattCharacteristic ->
-//            charas += gattCharacteristic
-//            val currentCharaData: HashMap<String, String> = hashMapOf()
-//            Log.i(TAG, "Characteristic UUID: " + gattCharacteristic.uuid.toString())
-////            uuid = gattCharacteristic.uuid.toString()
-////            currentCharaData[LIST_NAME] = SampleGattAttributes.lookup(uuid, unknownCharaString)
-////            currentCharaData[LIST_UUID] = uuid
-//            gattCharacteristicGroupData += currentCharaData
-//        }
-
-
-//        service.characteristics.stream().map{it->it.uuid.toString()}.collect(Collectors.joining("\n"))
         return charString
     }
 
